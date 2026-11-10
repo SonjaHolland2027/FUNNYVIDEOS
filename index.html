@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Video Select</title>
+
+<style>
+
+html,body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+background:#101010;
+overflow:hidden;
+font-family:Arial;
+}
+
+/* TV */
+#tv{
+position:absolute;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+width:96vw;
+height:94vh;
+padding:12px;
+box-sizing:border-box;
+border-radius:18px;
+background:linear-gradient(
+135deg,
+#444,#d8d8d8,#777,#222,#999,#555);
+}
+
+/* Netflix Grid */
+#menu{
+display:grid;
+grid-template-columns:repeat(3, 1fr);
+grid-template-rows:auto auto auto;
+gap:20px;
+width:100%;
+height:100%;
+background:#000;
+border-radius:10px;
+padding:20px;
+box-sizing:border-box;
+}
+
+/* TWILIGHT ZONE Title */
+#titlezone{
+grid-column:1 / span 3;
+text-align:center;
+font-size:60px;
+font-weight:bold;
+color:white;
+letter-spacing:4px;
+margin-bottom:10px;
+}
+
+/* Movie Cards */
+.card{
+cursor:pointer;
+transition:.25s;
+}
+
+.card:hover{
+transform:scale(1.03);
+}
+
+.card img{
+width:100%;
+border-radius:10px;
+display:block;
+}
+
+.title{
+color:white;
+font-size:22px;
+padding-top:10px;
+text-align:center;
+}
+
+/* Player */
+#player{
+display:none;
+position:relative;
+width:100%;
+height:100%;
+background:#000;
+border-radius:10px;
+}
+
+#ytplayer{
+position:absolute;
+inset:0;
+width:100%;
+height:calc(100% - 40px);
+}
+
+/* Seekbar */
+#seek{
+position:absolute;
+left:0;
+bottom:0;
+width:100%;
+height:40px;
+cursor:pointer;
+}
+
+/* Back button */
+#back{
+position:absolute;
+top:18px;
+left:18px;
+z-index:999;
+display:none;
+padding:10px 20px;
+background:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+/* CC button */
+#ccbtn{
+position:absolute;
+top:18px;
+left:110px;
+z-index:999;
+display:none;
+padding:10px 14px;
+background:white;
+border:none;
+border-radius:8px;
+font-size:14px;
+cursor:pointer;
+}
+
+#ccbtn.active{
+background:lightgreen;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="tv">
+
+<button id="back" onclick="showMenu()">← Back</button>
+<button id="ccbtn" onclick="toggleCC()">CC</button>
+
+<!-- NETFLIX GRID -->
+<div id="menu">
+
+<div id="titlezone">FUNNY VIDEO'S</div>
+
+<div class="card" onclick="playVideo('OhYQVIr6EKM')">
+<img src="https://img.youtube.com/vi/OhYQVIr6EKM/maxresdefault.jpg">
+<div class="title">Funny movie</div>
+</div>
+
+<div class="card" onclick="playVideo('llV9f7FIvys')">
+<img src="https://img.youtube.com/vi/llV9f7FIvys/maxresdefault.jpg">
+<div class="title">animals and water</div>
+</div>
+
+<div class="card" onclick="playVideo('Nlpb2NJoePk')">
+<img src="https://img.youtube.com/vi/Nlpb2NJoePk/maxresdefault.jpg">
+<div class="title">Funny movie</div>
+</div>
+
+<div class="card" onclick="playVideo('K2hV6UYD1ds')">
+<img src="https://img.youtube.com/vi/K2hV6UYD1ds/maxresdefault.jpg">
+<div class="title">When Kittens Boss Around Big Dogs</div>
+</div>
+
+<div class="card" onclick="playVideo('G2hG3NuuTYo')">
+<img src="https://img.youtube.com/vi/G2hG3NuuTYo/maxresdefault.jpg">
+<div class="title">Baby Bloopers</div>
+</div>
+
+<div class="card" onclick="playVideo('7-wfybHDpJQ')">
+<img src="https://img.youtube.com/vi/7-wfybHDpJQ/maxresdefault.jpg">
+<div class="title">Gym falles</div>
+</div>
+
+</div>
+
+<div id="player"></div>
+
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+
+let player;
+let timer;
+let ccOn = false;
+
+function playVideo(id){
+
+document.getElementById("menu").style.display="none";
+document.getElementById("back").style.display="block";
+document.getElementById("ccbtn").style.display="block";
+document.getElementById("player").style.display="block";
+
+document.getElementById("player").innerHTML=`
+<div id="ytplayer"></div>
+<input type="range" id="seek" value="0" min="0" max="100">
+`;
+
+player = new YT.Player('ytplayer',{
+videoId:id,
+playerVars:{
+autoplay:1,
+controls:1,
+rel:0,
+cc_load_policy:0
+},
+events:{
+onReady:onReady
+}
+});
+
+}
+
+function onReady(){
+
+const seek=document.getElementById("seek");
+
+timer=setInterval(()=>{
+
+if(player && player.getDuration){
+let d=player.getDuration();
+if(d>0){
+seek.value=(player.getCurrentTime()/d)*100;
+}
+}
+
+},300);
+
+seek.oninput=function(){
+player.seekTo(player.getDuration()*(this.value/100),true);
+};
+
+}
+
+function toggleCC(){
+
+if(!player) return;
+
+ccOn = !ccOn;
+
+const btn = document.getElementById("ccbtn");
+
+if(ccOn){
+
+player.loadModule("captions");
+player.setOption("captions","track",{languageCode:"en"});
+btn.classList.add("active");
+
+}else{
+
+player.setOption("captions","track",null);
+btn.classList.remove("active");
+
+}
+
+}
+
+function showMenu(){
+
+clearInterval(timer);
+
+if(player){
+player.destroy();
+}
+
+document.getElementById("player").innerHTML="";
+document.getElementById("player").style.display="none";
+document.getElementById("back").style.display="none";
+document.getElementById("ccbtn").style.display="none";
+
+document.getElementById("menu").style.display="grid";
+
+}
+
+</script>
+
+</body>
+</html>
